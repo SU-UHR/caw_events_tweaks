@@ -8,13 +8,11 @@
         typeof Drupal.settings.seatvpb !== "undefined" &&
         Drupal.settings.seatvpb.runrun == 'run')
       {
-          console.log(Drupal.settings.seatvpb.runrun);
           // Ensure we find something or die.
           var found = $('.view-stanford-events-calendar, .view-cardinal-at-work-stanford-events-calendar');
           console.log(found);
 
           if (found.length >= 1) {
-            console.log('triggered');
             seet_kill_calendar_ajax(found);
           }
       }
@@ -31,7 +29,6 @@
   function seet_kill_calendar_ajax(found) {
     // This captures all calendars...
     found.find('.date-nav a').on('click', function(e) {
-      console.log('killed');
       e.stopImmediatePropagation();
       return;
     });
