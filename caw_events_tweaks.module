@@ -13,7 +13,8 @@ function caw_events_tweaks_init() {
   $a1 = arg(1);
   $a2 = arg(2);
   $mini = isset($_REQUEST['mini']) ? check_plain($_REQUEST['mini']) : NULL;
-  // Need to add some logic for day vs month as back button on calendar block gives day argument when choosing the last month.
+  // Need to add some logic for day vs month as forward/back button on calendar block
+  // gives day argument when choosing the last month after choosing a day.
   if (!empty($mini)) {
     $date_exp = explode("-", $mini);
     if (count($date_exp) >= 3) {
