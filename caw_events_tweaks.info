@@ -1,0 +1,7 @@
+name = CAW Events Tweaks
+description = Modifies calendar functionality between calendar block and display.
+core = 7.x
+package = CAW
+version = 7.x-1.x-dev
+project = caw_events_tweaks
+scripts[] = js/caw_events_tweaks.js

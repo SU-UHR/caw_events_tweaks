@@ -1,0 +1,142 @@
+<?php
+/**
+ * @file
+ * Various tweaks alters inserts and customs for art.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function caw_events_tweaks_init() {
+
+  $a0 = arg(0);
+  $a1 = arg(1);
+  $a2 = arg(2);
+  $mini = isset($_REQUEST['mini']) ? check_plain($_REQUEST['mini']) : NULL;
+  // Need to add some logic for day vs month as back button on calendar block gives day argument when choosing the last month.
+  if (!empty($mini)) {
+    $date_exp = explode("-", $mini);
+    if (count($date_exp) >= 3) {
+      $day = TRUE;
+    }
+    else {
+      $day = FALSE;
+    }
+  }
+
+  // Day views
+  if ($a0 == "events" && $a1 == "day" && !empty($mini) && ($day == TRUE)) {
+    drupal_goto($a0 . "/" . $a1 . "/" . $mini);
+  }
+
+  // Month views
+  if ($a0 == "events" && ($a1 == "day" || $a1 == "month") && !empty($mini) && ($day == FALSE)) {
+    drupal_goto($a0 . "/month/" . $mini);
+  }
+
+  // Landing page
+  if (request_path() == "events/upcoming-events" && !empty($mini)) {
+    drupal_goto("events/month/" . $mini);
+  }
+
+}
+
+/**
+ * Alter all the things!.
+ * @param  [type] $view [description]
+ * @return [type]       [description]
+ */
+function caw_events_tweaks_views_pre_build(&$view) {
+
+  if ($view->name == "cardinal_at_work_stanford_events_calendar" && $view->current_display == "block_1") {
+    drupal_add_css(drupal_get_path('module', 'caw_events_tweaks') . "/css/caw_events_tweaks.css");
+    caw_events_tweaks_add_js_settings();
+    caw_events_tweaks_pass_args($view);
+  }
+
+  caw_events_tweaks_replace_header_text($view);
+
+}
+
+/**
+ * Adds JS settings to drupal settings
+ * @return [type] [description]
+ */
+function caw_events_tweaks_add_js_settings() {
+  $a0 = arg(0);
+  $a1 = arg(1);
+  $a2 = arg(2);
+
+  // Add some helper JS.
+  $settings = array(
+    'seatvpb' => array(
+      'arg0' => $a0,
+      'arg1' => $a1,
+    )
+  );
+
+  // Tell the javascript to execute or 'run'.
+  if (($a1 == "month" || $a1 == "day") && $a0 == "events") {
+    $settings['seatvpb']['runrun'] = "run";
+  }
+
+  // On the landing page as well i guess.
+  if (request_path() == "events/upcoming-events") {
+    $settings['seatvpb']['runrun'] = "run";
+  }
+
+  drupal_add_js($settings, 'setting');
+}
+
+/**
+ * If the calendar block is on a month display page we need to change the
+ * default day to what the contextual argument is.
+ * @param  view object
+ */
+function caw_events_tweaks_pass_args(&$view) {
+  $date = arg(2);
+
+  // Protect against day values;
+  $date_exp = explode("-", $date);
+  if (count($date_exp) >= 3) {
+    $date = $date_exp[0] . "-" . $date_exp[1];
+  }
+
+  $view->set_arguments(array($date));
+}
+
+/**
+ * Replaces text with real dates
+ * @return [type] [description]
+ */
+function caw_events_tweaks_replace_header_text(&$view) {
+
+  if (!isset($view->header["area_text_custom"]->options['content'])) {
+    return;
+  }
+
+  $month_text = date('F', strtotime($view->args[0]));
+  $day_text = date('F d', strtotime($view->args[0]));
+  $view->header["area_text_custom"]->options['content'] = str_replace('[month-replace]', $month_text, $view->header["area_text_custom"]->options['content']);
+  $view->header["area_text_custom"]->options['content'] = str_replace('[day-replace]', $day_text, $view->header["area_text_custom"]->options['content']);
+
+
+}
+
+
+/**
+ * [hook_views_query_alter description]
+ * @param  [type] $view  [description]
+ * @param  [type] $query [description]
+ * @return [type]        [description]
+ */
+function caw_events_tweaks_views_query_alter(&$view, &$query) {
+  // Find all combine fields and make them case insensitive.
+  foreach ($query->where as $group_key => $group) {
+    foreach ($group['conditions'] as $key => $condition) {
+      if (is_string($condition['field']) && (preg_match('/:views_combine/', $condition['field']))) {
+        $query->where[$group_key]['conditions'][$key]['field'] = $condition['field'] . ' COLLATE utf8_general_ci';
+      }
+    }
+  }
+}
